@@ -1,18 +1,6 @@
 '''
 Touch Sensor Control Script
 
-GPIO Code Modified from Raspberry Pi Touch Sensor Tutorial by newbiely.com
-
-https://newbiely.com/tutorials/raspberry-pi/raspberry-pi-touch-sensor
-
-
-Had to swap to using legacy gpio due to edge detection issues (annoying)
-but the structure/idea of everything is still built off of this tutorial
-
-
-lgpio docs:
-https://abyz.me.uk/lg/py_lgpio.html
-
 '''
 import lgpio
 import speech_recognition as sr
