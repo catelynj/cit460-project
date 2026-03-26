@@ -1,16 +1,12 @@
 
 '''
 API RESPONSE TEST SCRIPT
-
-Speech Recognition Reference: https://github.com/Uberi/speech_recognition/blob/master/examples/microphone_recognition.py
 '''
 from dotenv import load_dotenv
 import os
 import requests
 import translators as ts
 import wolframalpha
-import pyttsx3
-import speech_recognition as sr
 
 load_dotenv()
 
@@ -21,13 +17,6 @@ def translate(text):
 	#_ = ts.preaccelerate_and_speedtest() # caching available will work on adding later
 	translation = ts.translate_text(query_text=q_text, translator="google", to_language="ja")
 	print(translation)
-
-
-def tts():
-	#engine = pyttsx3.init()
-	#engine.say("hello, world")
-	#engine.runAndWait()
-
 
 def wolfram():
 	client = wolframalpha.Client(app_id)
