@@ -11,25 +11,37 @@ TTS Reference: https://pypi.org/project/pyttsx3/
 
 import pyttsx3
 import speech_recognition as sr
+import time
+import os
 
+statement = "" # replace sample with needed audio responses
 
-def tts():
-	#engine = pyttsx3.init()
-	#engine.say("hello, world")
-	#engine.runAndWait()
+def tts(phrase):
+  engine = pyttsx3.init()
+  engine.setProperty('rate', 140)
+  engine.say(phrase)
+  engine.runAndWait()
+  engine.stop()
 
 
 def listen():
-  # speech recog
-  r = sr.Recognizer()
-  with sr.Microphone() as source:
-  	print("Say something")
-   	audio = r.listen(source)
+  # flag defs: '-d (time), -f (quality), -t (file type), -D (audio device) 
+  os.system('arecord -d 4 -f cd -t wav -D pulse prompt.wav')
   
-  # Speech Recognition Engine: Sphinx (CMU)
+  r = sr.Recognizer()
+  
   try:
-  	print("What you said: " + r.recognize_sphinx(audio))
+    prompt = sr.AudioFile('prompt.wav')
+    with prompt as source:
+      audio = r.record(source)
+    global val
+    val = r.recognize_sphinx(audio) # Speech Recognition Engine: Sphinx (CMU)
+    print(val)
   except sr.UnknownValueError:
   	print("Audio not recognized")
   except sr.RequestError as e:
   	print("Sphinx error; {0}".format(e))
+
+
+
+
