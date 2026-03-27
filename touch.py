@@ -10,4 +10,6 @@ lgpio.gpio_claim_input(h, TOUCH_PIN)
 
 def read_touch():
     return lgpio.gpio_read(h, TOUCH_PIN)
+def close_touch():
+    return lgpio.gpiochip_close(h)
 

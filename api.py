@@ -18,12 +18,11 @@ def translate(text):
 	translation = ts.translate_text(query_text=q_text, translator="google", to_language="ja")
 	print(translation)
 
-def wolfram():
+def wolfram(prompt):
 	client = wolframalpha.Client(app_id)
-	query = "What is the temperature in Williamsport, PA?"
 	params = {
 		"appid": app_id,
-		"i": query
+		"i": prompt
 	}
 	response = requests.get("http://api.wolframalpha.com/v1/result", params=params)
 	print(response.text)

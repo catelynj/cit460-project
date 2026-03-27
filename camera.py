@@ -45,31 +45,30 @@ mean = (122.67891434, 116.66876762, 104.00698793)
 db18 = cv2.dnn_TextDetectionModel_DB(modelPath)
 db18.setBinaryThreshold(bin_thresh).setPolygonThreshold(poly_thresh)
 db18.setInputParams(1.0/255, inputSize, mean, True)
-	
-	'''
-	OpenCV is giving me issues
-	print("detecting...")
-	# detect text
-	boxes, _ = db18.detect(image)
-	print(f"detected {len(boxes)} boxes")
-	for box in boxes:
-		cv2.polylines(anno_image,[np.array(box,np.int32)], isClosed=True, color=(255,0,255), thickness=1)
+'''
+OpenCV is giving me issues
+print("detecting...")
+# detect text
+boxes, _ = db18.detect(image)
+print(f"detected {len(boxes)} boxes")
+for box in boxes:
+	cv2.polylines(anno_image,[np.array(box,np.int32)], isClosed=True, color=(255,0,255), thickness=1)
 
-	print("showing image...")
-	cv2.imshow('DB18', anno_image)
-	print("waiting for exit key...")
-	cv2.waitKey(0) # waits for key press to exit (indefinite)
-	cv2.destroyAllWindows()
-	'''
-	
+print("showing image...")
+cv2.imshow('DB18', anno_image)
+print("waiting for exit key...")
+cv2.waitKey(0) # waits for key press to exit (indefinite)
+cv2.destroyAllWindows()
+'''
 	
 def take_picture():
 	cam.start()
 	cam.capture_file(p_filename)
+	return p_filename
 
-def start_recording(cam,encoder,output):
+def start_recording():
 	cam.start_recording(encoder, output, quality=Quality.HIGH)
 	
-def stop_recording(cam):
+def stop_recording():
 	cam.stop_recording()
 
