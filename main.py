@@ -42,7 +42,8 @@ try:
                 print("listening for prompt...")
                 val = listen()
                 if 'exit' in val:
-                    os.system('pkill -f main.py')
+                    tts("shutting down")
+                    break
                 elif 'ask' in val:
                     tts("state your question")
                     question = listen()
@@ -55,6 +56,8 @@ try:
                     text = ocr(image)
                     translation = translate(text)
                     tts(translation)
+                else:
+                    tts("command not recognized")
             elif touch_count == 2:
                 take_picture()
             elif touch_count >= 3:
@@ -67,4 +70,6 @@ try:
         time.sleep(0.05)
 
 except KeyboardInterrupt:
+    pass
+finally:
     close_touch()
