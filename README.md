@@ -43,3 +43,17 @@ o	Complete Sprint 2 Backlog
 -	Final Submissions:\
 o	Final Summary Report\
 o	Final Presentation
+
+
+### References:
+_Debugging and headaches dealt with using Claude_
+- Project Inspiration
+  - https://www.instructables.com/Smart-Glasses-V2/
+- Wolfram|Alpha:
+  - https://products.wolframalpha.com/short-answers-api/documentation
+- OpenCV (EAST) & Tesseract 
+  - https://pyimagesearch.com/2018/09/17/opencv-ocr-and-text-recognition-with-tesseract/
+  - https://opencv.org/blog/text-detection-and-removal-using-opencv/
+
+
+
