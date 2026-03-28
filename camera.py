@@ -14,12 +14,12 @@ from picamera2.encoders import H264Encoder, Quality
 from picamera2.outputs import PyavOutput
 import pytesseract
 import imutils
-import argparse
 import cv2
 import time
 import numpy as np
+from config import EAST_MODEL_PATH, MIN_CONFIDENCE, EAST_WIDTH, EAST_HEIGHT, EAST_PADDING
 
-# picam
+# -- CAMERA START --
 cam = Picamera2()
 camera_config = cam.create_video_configuration()
 cam.set_controls({"FrameRate": 30, "ExposureTime": 0, "AnalogueGain": 0})
@@ -30,24 +30,6 @@ p_filename = f"/home/c8win/Pictures/pic_{timestamp}.jpg"
 v_filename = f"/home/c8win/Videos/vid_{timestamp}.h264"
 output = v_filename
 
-# opencv
-modelPath = "frozen_east_text_detection.pb"
-image_path = "stop_sign.jpg"
-_image = cv2.imread(image_path)
-image = cv2.resize(_image, (320,320))
-anno_image = image.copy()
-orig_EAST_img = image.copy()
-
-# EAST params
-inputSize = (320,320)
-conf_thresh = 0.8
-nms_thresh = 0.4
-EAST = cv2.dnn_TextDetectionModel_EAST(modelPath)
-EAST.setConfidenceThreshold(conf_thresh)
-EAST.setNMSThreshold(nms_thresh)
-EAST.setInputParams(1.0,inputSize,(123.68,116.78,103.94),True)
-
-# camera controls
 def take_picture():
 	cam.start()
 	cam.capture_file(p_filename)
@@ -58,21 +40,113 @@ def start_recording():
 	
 def stop_recording():
 	cam.stop_recording()
-	
-# opencv & tesseract
-def ocr(anno_image):
-	# TODO: implement ocr (duh)
-	return ""
-	
-def text_detection(picture):
-	print("detecting...")
-	boxes, _ = EAST.detect(picture)
-	for box in boxes:
-		cv2.polylines(anno_image,[np.array(box,np.int32)], isClosed=True, color=(255,0,255), thickness=1)
-	print("showing image...")
-	cv2.imshow('EAST', anno_image)
-	print("waiting for exit key...")
-	cv2.waitKey(0) # waits for key press to exit (indefinite)
-	cv2.destroyAllWindows()
-	return anno_image
+# -- CAMERA END --
 
+# -- OPENCV & TESSERACT START --
+modelPath = "frozen_east_text_detection.pb"
+image_path = "stop_sign.jpg" # for testing
+_image = cv2.imread(image_path)
+orig = _image.copy() # keep this one untouched!
+
+# EAST setup
+# load this outside of any function calls to avoid performance issues
+net = cv2.dnn.readNet(modelPath)
+# EAST returns 2 output layers, the 1st is used for probabilities and the 2nd is for bounding box coords
+LAYER_NAMES = [
+    "feature_fusion/Conv_7/Sigmoid",
+    "feature_fusion/concat_3"
+]
+# pulled directly from OpenCV OCR & Text Recognition with Tesseract article linked above
+def decode_predictions(scores, geometry):
+  # number of rows and cols from scores
+  (numRows,numCols) = scores.shape[2:4]
+  #initialize set of bounding boxes & confidence scores
+  rects = []
+  confidences = []
+  for y in range(0,numRows):
+    #extract scores
+    scoresData = scores[0,0,y]
+    #extract geometrical data 
+    xData0 = geometry[0,0,y]
+    xData1 = geometry[0,1,y]
+    xData2 = geometry[0,2,y]
+    xData3 = geometry[0,3,y]
+    anglesData = geometry[0,4,y]
+    for x in range(0,numCols):
+      # if score is not high enough confidence, ignore
+      if scoresData[x] < MIN_CONFIDENCE:
+        continue
+      # compute offset factor as resulting feature
+      (offsetX, offsetY) = (x * 4.0, y * 4.0)
+      # get rotation angle for prediction
+      angle = anglesData[x]
+      # calc cosine and sine
+      cos = np.cos(angle)
+      sin = np.sin(angle)
+      # use geometry to get height and width of bounding box
+      h = xData0[x] + xData2[x]
+      w = xData1[x] + xData3[x]
+      # compute start and end coordinates for bounding box
+      endX = int(offsetX + (cos * xData1[x]) + (sin * xData2[x]))
+      endY = int(offsetY - (sin * xData1[x]) + (cos * xData2[x]))
+      startX = int(endX - w)
+      startY = int(endY - h)
+      # add bounding box coordinates & prob score to lists
+      rects.append((startX,startY,endX,endY))
+      confidences.append(scoresData[x])
+  #return tuple of bounding boxes and confidences
+  return (rects, confidences)  
+
+# modified from OpenCV OCR & Text Recognition with Tesseract article to use constants 
+def detect_text_regions(image):
+	# get image size
+    (H, W) = image.shape[:2]
+	# get ratios of original image
+    rW = W / float(EAST_WIDTH)
+    rH = H / float(EAST_HEIGHT)
+	# resize image for EAST
+    resized = cv2.resize(image, (EAST_WIDTH, EAST_HEIGHT))
+	# convert to blob
+    blob = cv2.dnn.blobFromImage(resized, 1.0, (EAST_WIDTH, EAST_HEIGHT), (123.68, 116.78, 103.94), swapRB=True, crop=False)
+	# pass the blob to EAST to get output layers
+	net.setInput(blob)
+    (scores, geometry) = net.forward(LAYER_NAMES)
+	# apply NMS suppression to get rid of weak/overlapping boxes
+    (rects, confidences) = decode_predictions(scores, geometry)
+    boxes = non_max_suppression(np.array(rects), probs=confidences)
+	# return the bounding boxes and ratios for resizing
+    return boxes, rW, rH
+
+def ocr(image, boxes, rW, rH):
+	results = []
+	for (startX, startY, endX, endY) in boxes:
+		# scale boxes to original ratios 
+		startX = int(startX * rW)
+		startY = int(startY * rH)
+		endX = int(endX * rW)
+		endY = int(endY * rH)
+		# apply padding to bounding boxes
+		dX = int((endX - startX) * EAST_PADDING)
+		dY = int((endY - startY) * EAST_PADDING)
+		startX = max(0, startX - dX)
+		startY = max(0, startY - dY)
+		endX = min(orig.shape[0], endX + (dX * 2))
+		endY = min(orig.shape[1], endY + (dY * 2))
+		# extract the padded ROI
+		roi = image[startY:endY, startX:endX]
+		# need some config stuff for tesseract 
+		config=("-l eng --oem 1 --psm 7")
+		text = pytesseract.image_to_string(roi, config=config)
+		# add bounding box coordinatess and text to results
+		results.append(((startX, startY, endX, endY),text))
+	# sort bounding box coords 
+	results = sorted(results, key=lambda r:r[0][1])
+	for ((startX, startY, endX, endY), text) in results:
+		# display the text
+		print("OCR TEXT")
+		print("========")
+		print("{}\n".format(text))
+	
+	return results
+
+# -- OPENCV & TESSERACT END --
