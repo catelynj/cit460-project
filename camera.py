@@ -17,7 +17,7 @@ import imutils
 import cv2
 import time
 import numpy as np
-from config import EAST_MODEL_PATH, MIN_CONFIDENCE, EAST_WIDTH, EAST_HEIGHT, EAST_PADDING
+from pathlib import Path
 
 # -- CAMERA START --
 cam = Picamera2()
@@ -33,25 +33,32 @@ output = v_filename
 def take_picture():
 	cam.start()
 	cam.capture_file(p_filename)
-	return p_filename
 
 def start_recording():
 	cam.start_recording(encoder, output, quality=Quality.HIGH)
 	
 def stop_recording():
 	cam.stop_recording()
+	
+# for translations
+def snapshot():
+	cam.start()
+	cam.capture_file("translate.jpg")
+	
 # -- CAMERA END --
 
 # -- OPENCV & TESSERACT START --
 modelPath = "frozen_east_text_detection.pb"
-image_path = "stop_sign.jpg" # for testing
+Path("translate.jpg").touch(exist_ok=True)
+image_path = "translate.jpg" # hardcoded - sue me
 _image = cv2.imread(image_path)
-orig = _image.copy() # keep this one untouched!
+orig = _image.copy()
 
 # EAST setup
-# load this outside of any function calls to avoid performance issues
+# load outside of any function calls to avoid performance issues
 net = cv2.dnn.readNet(modelPath)
-# EAST returns 2 output layers, the 1st is used for probabilities and the 2nd is for bounding box coords
+# EAST returns 2 output layers, the 1st is used for probabilities 
+# and the 2nd is for bounding box coords
 LAYER_NAMES = [
     "feature_fusion/Conv_7/Sigmoid",
     "feature_fusion/concat_3"
@@ -74,7 +81,7 @@ def decode_predictions(scores, geometry):
     anglesData = geometry[0,4,y]
     for x in range(0,numCols):
       # if score is not high enough confidence, ignore
-      if scoresData[x] < MIN_CONFIDENCE:
+      if scoresData[x] < 0.5:
         continue
       # compute offset factor as resulting feature
       (offsetX, offsetY) = (x * 4.0, y * 4.0)
@@ -100,23 +107,23 @@ def decode_predictions(scores, geometry):
 # modified from OpenCV OCR & Text Recognition with Tesseract article to use constants 
 def detect_text_regions(image):
 	# get image size
-    (H, W) = image.shape[:2]
+	(H, W) = image.shape[:2]
 	# get ratios of original image
-    rW = W / float(EAST_WIDTH)
-    rH = H / float(EAST_HEIGHT)
+	rW = W / float(320)
+	rH = H / float(320)
 	# resize image for EAST
-    resized = cv2.resize(image, (EAST_WIDTH, EAST_HEIGHT))
+	resized = cv2.resize(image, (320, 320))
 	# convert to blob
-    blob = cv2.dnn.blobFromImage(resized, 1.0, (EAST_WIDTH, EAST_HEIGHT), (123.68, 116.78, 103.94), swapRB=True, crop=False)
+	blob = cv2.dnn.blobFromImage(resized, 1.0, (320,320),(123.68, 116.78, 103.94),swapRB=True, crop=False)
 	# pass the blob to EAST to get output layers
 	net.setInput(blob)
-    (scores, geometry) = net.forward(LAYER_NAMES)
+	(scores, geometry) = net.forward(LAYER_NAMES)
 	# apply NMS suppression to get rid of weak/overlapping boxes
-    (rects, confidences) = decode_predictions(scores, geometry)
-    boxes = non_max_suppression(np.array(rects), probs=confidences)
+	(rects, confidences) = decode_predictions(scores, geometry)
+	boxes = non_max_suppression(np.array(rects), probs=confidences)
 	# return the bounding boxes and ratios for resizing
-    return boxes, rW, rH
-
+	return boxes, rW, rH
+	
 def ocr(image, boxes, rW, rH):
 	results = []
 	for (startX, startY, endX, endY) in boxes:
@@ -126,8 +133,8 @@ def ocr(image, boxes, rW, rH):
 		endX = int(endX * rW)
 		endY = int(endY * rH)
 		# apply padding to bounding boxes
-		dX = int((endX - startX) * EAST_PADDING)
-		dY = int((endY - startY) * EAST_PADDING)
+		dX = int((endX - startX) * 0.1)
+		dY = int((endY - startY) * 0.1)
 		startX = max(0, startX - dX)
 		startY = max(0, startY - dY)
 		endX = min(orig.shape[0], endX + (dX * 2))

@@ -10,7 +10,7 @@ import time
 from api import wolfram, translate 
 from audio import tts, listen 
 from touch import read_touch, close_touch
-from camera import start_recording,stop_recording,take_picture
+from camera import start_recording,stop_recording,take_picture,snapshot
 
 #touch sensor
 touch_count = 0
@@ -25,7 +25,7 @@ try:
     while True:
         current_state = read_touch()
 
-        if current_state == 1 and last_state == 0:  # rising edge
+        if current_state == 1 and last_state == 0:
             if time.time() - last_press > TIMEOUT:
                 touch_count = 0
             touch_count += 1
@@ -51,11 +51,11 @@ try:
                     tts(answer)
                 elif 'translate' in val:
                     tts("picture taken, please wait for translation")
-                    # take a pic
-                    image = take_picture()
+                    image = snapshot() # different from take_picture
                     text = ocr(image)
                     translation = translate(text)
                     tts(translation)
+                    os.remove("/home/c8win/Pictures/translate.jpg") # delete the picture after 
                 else:
                     tts("command not recognized")
             elif touch_count == 2:

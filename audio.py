@@ -14,8 +14,6 @@ import speech_recognition as sr
 import time
 import os
 
-statement = "" # replace sample with needed audio responses
-
 def tts(phrase):
   engine = pyttsx3.init()
   engine.setProperty('rate', 140)
