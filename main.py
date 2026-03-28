@@ -43,6 +43,7 @@ try:
                 val = listen()
                 if 'exit' in val:
                     tts("shutting down")
+                    os.remove("translate.jpg") # delete picture used for translating before shutdown
                     break
                 elif 'ask' in val:
                     tts("state your question")
@@ -51,11 +52,10 @@ try:
                     tts(answer)
                 elif 'translate' in val:
                     tts("picture taken, please wait for translation")
-                    image = snapshot() # different from take_picture
-                    text = ocr(image)
+                    snapshot() # different from take_picture
+                    text = ocr()
                     translation = translate(text)
                     tts(translation)
-                    os.remove("/home/c8win/Pictures/translate.jpg") # delete the picture after 
                 else:
                     tts("command not recognized")
             elif touch_count == 2:
