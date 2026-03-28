@@ -62,10 +62,13 @@ LAYER_NAMES = [
 
 # pulled directly from OpenCV OCR & Text Recognition with Tesseract article
 def decode_predictions(scores, geometry):
+    # number of rows and cols from scores
     (numRows, numCols) = scores.shape[2:4]
+    # initialize set of bounding boxes & confidence scores
     rects = []
     confidences = []
     for y in range(0, numRows):
+        #extract scores
         scoresData = scores[0, 0, y]
         xData0 = geometry[0, 0, y]
         xData1 = geometry[0, 1, y]
@@ -75,30 +78,42 @@ def decode_predictions(scores, geometry):
         for x in range(0, numCols):
             if scoresData[x] < 0.5:
                 continue
+            # compute offset factor as resulting feature
             (offsetX, offsetY) = (x * 4.0, y * 4.0)
+            # get rotation angle for prediction
             angle = anglesData[x]
+            # calc sine and cosine
             cos = np.cos(angle)
             sin = np.sin(angle)
+            # use geometry to get height and width of bounding box
             h = xData0[x] + xData2[x]
             w = xData1[x] + xData3[x]
+            # compute start and end coords for bounding box
             endX = int(offsetX + (cos * xData1[x]) + (sin * xData2[x]))
             endY = int(offsetY - (sin * xData1[x]) + (cos * xData2[x]))
             startX = int(endX - w)
             startY = int(endY - h)
+            # add bounding box coordinates & prob score to lists
             rects.append((startX, startY, endX, endY))
             confidences.append(scoresData[x])
     return (rects, confidences)
 
 # modified from OpenCV OCR & Text Recognition with Tesseract article
 def detect_text_regions(image):
+    # get image size
     (H, W) = image.shape[:2]
+    # calc ratio of original image
     rW = W / float(320)
     rH = H / float(320)
+    # resize image for EAST
     resized = cv2.resize(image, (320, 320))
+    # convert to blob
     blob = cv2.dnn.blobFromImage(resized, 1.0, (320, 320),
         (123.68, 116.78, 103.94), swapRB=True, crop=False)
+    # pass the blob to EAST and get output layers
     net.setInput(blob)
     (scores, geometry) = net.forward(LAYER_NAMES)
+    # apply NMS suppression to get rid of weak/overlapping boxes
     (rects, confidences) = decode_predictions(scores, geometry)
     boxes = non_max_suppression(np.array(rects), probs=confidences)
     return boxes, rW, rH
@@ -112,20 +127,26 @@ def ocr():
     boxes, rW, rH = detect_text_regions(image)
     results = []
     for (startX, startY, endX, endY) in boxes:
+        # scale boxes to original image ratios
         startX = int(startX * rW)
         startY = int(startY * rH)
         endX = int(endX * rW)
         endY = int(endY * rH)
+        # apply padding to bounding boxes
         dX = int((endX - startX) * 0.1)
         dY = int((endY - startY) * 0.1)
         startX = max(0, startX - dX)
         startY = max(0, startY - dY)
         endX = min(orig.shape[1], endX + (dX * 2))
         endY = min(orig.shape[0], endY + (dY * 2))
+        # extract padded roi
         roi = orig[startY:endY, startX:endX]
+        # config stuff for tesseract
         config = ("-l eng --oem 1 --psm 7")
         text = pytesseract.image_to_string(roi, config=config)
+        # add box coords and text to results
         results.append(((startX, startY, endX, endY), text))
+    # sort bounding box coords
     results = sorted(results, key=lambda r: r[0][1])
     for ((startX, startY, endX, endY), text) in results:
         print("OCR TEXT")
