@@ -41,23 +41,38 @@ try:
             if touch_count == 1:
                 print("listening for prompt...")
                 val = listen()
-                if 'exit' in val:
-                    tts("shutting down")
-                    os.remove("translate.jpg") # delete picture used for translating before shutdown
-                    break
-                elif 'ask' in val:
-                    tts("state your question")
-                    question = listen()
-                    answer = wolfram(question)
-                    tts(answer)
-                elif 'translate' in val:
-                    tts("picture taken, please wait for translation")
-                    snapshot() # different from take_picture
-                    text = ocr()
-                    translation = translate(text)
-                    tts(translation)
+                print(f"heard: {val}")
+                
+                if val is None:
+                    tts("sorry, i didn't catch that.")
                 else:
-                    tts("command not recognized")
+                    if 'exit' in val:
+                        tts("shutting down")
+                        os.remove("translate.jpg") # delete picture used for translating before shutdown
+                        break
+                    elif 'ask' in val:
+                        print("'ask' heard")
+                        tts("state your question")
+                        print("listening...")
+                        question = listen()
+                        print(f"heard: {question}")
+                        print("calling wolfram")
+                        answer = wolfram(question)
+                        tts(answer)
+                        print("ask completed: " + answer)
+                    elif 'translate' in val:
+                        print("'translate' heard")
+                        snapshot() # different from take_picture
+                        tts("picture taken, please wait for translation")
+                        print("picture taken, calling ocr")
+                        text = ocr()
+                        print("ocr called. calling translate")
+                        translation = translate(text)
+                        tts(translation)
+                        print("translation completed: " + translation)
+                    else:
+                        tts("command not recognized")
+                        print("command not recognized, exiting prompt")
             elif touch_count == 2:
                 take_picture()
             elif touch_count >= 3:

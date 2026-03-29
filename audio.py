@@ -16,7 +16,9 @@ import os
 
 def tts(phrase):
   engine = pyttsx3.init()
-  engine.setProperty('rate', 140)
+  engine.setProperty('rate', 150)
+  engine.say(" ")
+  engine.runAndWait()
   engine.say(phrase)
   engine.runAndWait()
   engine.stop()
@@ -25,21 +27,17 @@ def tts(phrase):
 def listen():
   # flag defs: '-d (time), -f (quality), -t (file type), -D (audio device) 
   os.system('arecord -d 4 -f cd -t wav -D pulse prompt.wav')
-  
   r = sr.Recognizer()
-  
   try:
     prompt = sr.AudioFile('prompt.wav')
     with prompt as source:
       audio = r.record(source)
-    global val
     val = r.recognize_sphinx(audio) # Speech Recognition Engine: Sphinx (CMU)
-    print(val)
+    return val
   except sr.UnknownValueError:
-  	print("Audio not recognized")
+    print("Audio not recognized")
+    return ""
   except sr.RequestError as e:
-  	print("Sphinx error; {0}".format(e))
-
-
-
+    print("Sphinx error; {0}".format(e))
+    return ""
 
