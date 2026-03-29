@@ -12,9 +12,15 @@ load_dotenv()
 app_id = os.getenv("APP_ID")
 
 def translate(text):
-	#_ = ts.preaccelerate_and_speedtest() # caching available will work on adding later
-	translation = ts.translate_text(query_text=text, translator="google", to_language="en")
-	print(translation)
+	if not text or not text.strip():
+        return ""
+    try:
+        translation = ts.translate_text(query_text=text, translator="google", to_language="en")
+        print(translation)
+        return translation
+    except Exception as e:
+        print(f"translation error: {e}")
+        return ""
 
 def wolfram(prompt):
 	client = wolframalpha.Client(app_id)
