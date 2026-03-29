@@ -10,7 +10,7 @@ import time
 from api import wolfram, translate 
 from audio import tts, listen 
 from touch import read_touch, close_touch
-from camera import start_recording,stop_recording,take_picture,snapshot
+from camera import start_recording,stop_recording,take_picture,snapshot,ocr
 
 #touch sensor
 touch_count = 0
@@ -41,6 +41,7 @@ try:
             if touch_count == 1:
                 print("listening for prompt...")
                 val = listen()
+                val = val.lower() # 'translate' auto capitalizes 
                 print(f"heard: {val}")
                 
                 if val is None:
@@ -48,23 +49,23 @@ try:
                 else:
                     if 'exit' in val:
                         tts("shutting down")
-                        os.remove("translate.jpg") # delete picture used for translating before shutdown
                         break
-                    elif 'ask' in val:
-                        print("'ask' heard")
+                    elif 'ask' in val  or 'question' in val:
                         tts("state your question")
+                        time.sleep(2.0)
                         print("listening...")
-                        question = listen()
+                        question = listen(dur=10)
                         print(f"heard: {question}")
                         print("calling wolfram")
                         answer = wolfram(question)
+                        print(answer)
                         tts(answer)
-                        print("ask completed: " + answer)
                     elif 'translate' in val:
                         print("'translate' heard")
-                        snapshot() # different from take_picture
-                        tts("picture taken, please wait for translation")
-                        print("picture taken, calling ocr")
+                        #snapshot() # hardcoded for testing
+                        #tts("picture taken, please wait for translation")
+                        tts("wait for translation")
+                        #print("picture taken, calling ocr")
                         text = ocr()
                         print("ocr called. calling translate")
                         translation = translate(text)

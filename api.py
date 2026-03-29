@@ -13,7 +13,7 @@ app_id = os.getenv("APP_ID")
 
 def translate(text):
 	#_ = ts.preaccelerate_and_speedtest() # caching available will work on adding later
-	translation = ts.translate_text(query_text=text, translator="google")
+	translation = ts.translate_text(query_text=text, translator="google", to_language="en")
 	print(translation)
 
 def wolfram(prompt):
@@ -23,6 +23,6 @@ def wolfram(prompt):
 		"i": prompt
 	}
 	response = requests.get("http://api.wolframalpha.com/v1/result", params=params)
-	print(response.text)
+	return response.text
 
 

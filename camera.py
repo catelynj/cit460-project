@@ -33,6 +33,7 @@ output = v_filename
 def take_picture():
     cam.start()
     cam.capture_file(p_filename)
+    cam.stop()
 
 def start_recording():
     cam.start_recording(encoder, output, quality=Quality.HIGH)
@@ -43,22 +44,29 @@ def stop_recording():
 def snapshot():
     cam.start()
     cam.capture_file("translate.jpg")
+    cam.stop()
 
 # -- CAMERA END --
 
 # -- OPENCV & TESSERACT START --
 modelPath = "frozen_east_text_detection.pb"
-image_path = "translate.jpg"
-Path(image_path).touch(exist_ok=True)
+image_path = "kanji.jpeg"
+#Path(image_path).touch(exist_ok=True)
 
-# load outside of any function calls to avoid performance issues
-net = cv2.dnn.readNet(modelPath)
+net = None
 # EAST returns 2 output layers, the 1st is used for probabilities
 # and the 2nd is for bounding box coords
 LAYER_NAMES = [
     "feature_fusion/Conv_7/Sigmoid",
     "feature_fusion/concat_3"
 ]
+
+
+def load_model():
+	global net
+	if net is None:
+		print("loading EAST model...")
+		net = cv2.dnn.readNet(modelPath)
 
 # pulled directly from OpenCV OCR & Text Recognition with Tesseract article
 def decode_predictions(scores, geometry):
@@ -100,6 +108,7 @@ def decode_predictions(scores, geometry):
 
 # modified from OpenCV OCR & Text Recognition with Tesseract article
 def detect_text_regions(image):
+    load_model()
     # get image size
     (H, W) = image.shape[:2]
     # calc ratio of original image
@@ -142,16 +151,21 @@ def ocr():
         # extract padded roi
         roi = orig[startY:endY, startX:endX]
         # config stuff for tesseract
-        config = ("-l eng --oem 1 --psm 7")
+        config = ("-l eng+jpn+fra+spa --oem 1 --psm 7")
         text = pytesseract.image_to_string(roi, config=config)
         # add box coords and text to results
         results.append(((startX, startY, endX, endY), text))
     # sort bounding box coords
     results = sorted(results, key=lambda r: r[0][1])
+    print(results)
     for ((startX, startY, endX, endY), text) in results:
         print("OCR TEXT")
         print("========")
         print("{}\n".format(text))
-    return results
+    text = [s.strip() for _,s in results if s.strip()]
+    #print(text)
+    return text
 
 # -- OPENCV & TESSERACT END --
+
+#ocr()
