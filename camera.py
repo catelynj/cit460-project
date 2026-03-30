@@ -162,7 +162,7 @@ def ocr():
         print("OCR TEXT")
         print("========")
         print("{}\n".format(text))
-    text = [s.strip() for _,s in results if s.strip()]
+    text = "".join([s.strip() for _,s in results if s.strip()])
     #print(text)
     return text
 
