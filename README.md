@@ -28,12 +28,12 @@ o	OCR\
 o	Prompt API w/ OCR Input\
 o	Action Word Prompting
 
--	Companion Application:
+~~-	Companion Application:
 o	Setup Emulator\
 o	Connect to Main Application\
 o	Display API Responses\
 o	Store Images & Videos / Download Images & Videos\
-o	Design UI
+o	Design UI~~
 
 Sprint 3 (March 30th – April 26th)
  
