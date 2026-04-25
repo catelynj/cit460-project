@@ -11,7 +11,7 @@ from api import wolfram, translate
 from audio import tts, listen 
 from touch import read_touch, close_touch
 from camera import start_recording,stop_recording,take_picture,ocr, snapshot
-from database import log_query
+from database import init_db,log_query
 
 #touch sensor
 touch_count = 0
@@ -20,6 +20,8 @@ PRESS_WAIT = 0.4
 last_press = time.time()
 last_state = 0
 recording = False
+
+init_db()
 
 print("awaiting input...")
 try:
