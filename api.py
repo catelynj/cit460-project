@@ -23,12 +23,9 @@ def translate(text):
 		return ""
 
 def wolfram(prompt):
-	client = wolframalpha.Client(app_id)
-	params = {
-		"appid": app_id,
-		"i": prompt
-	}
-	response = requests.get("http://api.wolframalpha.com/v1/result", params=params)
-	return response.text
+    params = {"appid": app_id, "i": prompt}
+    response = requests.get("http://api.wolframalpha.com/v1/result", params=params)
+    response.raise_for_status()
+    return response.text
 
 

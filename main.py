@@ -10,7 +10,8 @@ import time
 from api import wolfram, translate 
 from audio import tts, listen 
 from touch import read_touch, close_touch
-from camera import start_recording,stop_recording,take_picture,snapshot,ocr
+from camera import start_recording,stop_recording,take_picture,ocr, snapshot
+from database import log_query
 
 #touch sensor
 touch_count = 0
@@ -58,6 +59,7 @@ try:
                         print(f"heard: {question}")
                         print("calling wolfram")
                         answer = wolfram(question)
+                        log_query(question, answer)
                         print(answer)
                         tts(answer)
                     elif 'translate' in val:

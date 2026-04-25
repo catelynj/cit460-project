@@ -7,9 +7,11 @@ Run alongside main.py: `python server.py`
 import os
 import asyncio
 import logging
+from api import wolfram, translate
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
+
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
 from fastapi.responses import FileResponse, JSONResponse
@@ -67,6 +69,18 @@ def file_info(path: Path) -> dict:
         "download_url": f"/download/{path.name}",
     }
 
+@app.get("/history")
+async def get_history(limit: int = 50):
+    conn = sqlite3.connect("/home/c8win/queries.db")
+    rows = conn.execute(
+        "SELECT query, response, status, queried_at FROM query_history ORDER BY queried_at DESC LIMIT ?",
+        (limit,)
+    ).fetchall()
+    conn.close()
+    return [
+        {"query": r[0], "response": r[1], "status": r[2], "queried_at": r[3]}
+        for r in rows
+    ]
 
 @app.get("/health")
 async def health_check():
