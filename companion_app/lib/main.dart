@@ -112,7 +112,7 @@ class _ChatState extends State<Chat> {
   @override
   void initState() {
     super.initState();
-    loadChatHistory();
+    Future.microtask(() => loadChatHistory());
   }
 
   @override
