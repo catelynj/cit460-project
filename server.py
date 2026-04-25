@@ -42,7 +42,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET", "POST", "DELETE"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -159,19 +159,6 @@ async def download_file(filename: str):
         media_type=media_type,
         filename=safe_name,
     )
-
-
-@app.delete("/media/{filename}")
-async def delete_file(filename: str):
-    safe_name = Path(filename).name
-    file_path = CAPTURES_DIR / safe_name
-
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail=f"File '{safe_name}' not found")
-
-    file_path.unlink()
-    logger.info(f"Deleted: {safe_name}")
-    return {"deleted": safe_name}
 
 if __name__ == "__main__":
     logger.info(f"Starting Pi Camera Server on http://{HOST}:{PORT}")
