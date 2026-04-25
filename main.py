@@ -37,7 +37,6 @@ try:
         if recording and touch_count >= 3:
             stop_recording()
             recording = False
-            tts("beep")
             touch_count = 0
 
         elif touch_count > 0 and time.time() - last_press > PRESS_WAIT:
@@ -83,7 +82,6 @@ try:
             elif touch_count >= 3:
                 start_recording()
                 recording = True
-                tts("beep")
             touch_count = 0
 
         last_state = current_state

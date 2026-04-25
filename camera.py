@@ -26,8 +26,8 @@ cam.set_controls({"FrameRate": 30, "ExposureTime": 0, "AnalogueGain": 0})
 cam.configure(camera_config)
 encoder = H264Encoder()
 timestamp = datetime.now().strftime("%m%d%Y_%H%M%S")
-p_filename = f"/home/c8win/Pictures/pic_{timestamp}.jpg"
-v_filename = f"/home/c8win/Videos/vid_{timestamp}.h264"
+p_filename = f"/home/c8win/Captures/pic_{timestamp}.jpg"
+v_filename = f"/home/c8win/Captures/vid_{timestamp}.h264"
 output = v_filename
 
 def take_picture():
