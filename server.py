@@ -20,8 +20,8 @@ import uvicorn
 # config
 
 CAPTURES_DIR = Path("/home/c8win/Captures")       
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
-VIDEO_EXTENSIONS = {".mp4", ".h264", ".mkv"}
+IMAGE_EXTENSION = {".jpg"}
+VIDEO_EXTENSION = {".h264"}
 HOST = "0.0.0.0"                              
 PORT = 8000
 
@@ -48,9 +48,9 @@ app.mount("/files", StaticFiles(directory=str(CAPTURES_DIR)), name="files")
 
 def file_type(path: Path) -> str:
     ext = path.suffix.lower()
-    if ext in IMAGE_EXTENSIONS:
+    if ext in IMAGE_EXTENSION:
         return "image"
-    if ext in VIDEO_EXTENSIONS:
+    if ext in VIDEO_EXTENSION:
         return "video"
     return "unknown"
 
@@ -82,7 +82,7 @@ async def list_media(
     all_files = sorted(
         [
             p for p in CAPTURES_DIR.iterdir()
-            if p.is_file() and p.suffix.lower() in (IMAGE_EXTENSIONS | VIDEO_EXTENSIONS)
+            if p.is_file() and p.suffix.lower() in (IMAGE_EXTENSION | VIDEO_EXTENSION)
         ],
         key=lambda p: p.stat().st_mtime,
         reverse=True,
@@ -106,7 +106,7 @@ async def get_latest(type: Optional[str] = Query(None, description="'image' or '
     files = sorted(
         [
             p for p in CAPTURES_DIR.iterdir()
-            if p.is_file() and p.suffix.lower() in (IMAGE_EXTENSIONS | VIDEO_EXTENSIONS)
+            if p.is_file() and p.suffix.lower() in (IMAGE_EXTENSION | VIDEO_EXTENSION)
         ],
         key=lambda p: p.stat().st_mtime,
         reverse=True,
@@ -157,20 +157,6 @@ async def delete_file(filename: str):
     file_path.unlink()
     logger.info(f"Deleted: {safe_name}")
     return {"deleted": safe_name}
-
-
-@app.delete("/media")
-async def delete_all_media(background_tasks: BackgroundTasks):
-    def _delete_all():
-        count = 0
-        for p in CAPTURES_DIR.iterdir():
-            if p.is_file() and p.suffix.lower() in (IMAGE_EXTENSIONS | VIDEO_EXTENSIONS):
-                p.unlink()
-                count += 1
-        logger.info(f"Bulk delete complete: {count} files removed")
-
-    background_tasks.add_task(_delete_all)
-    return {"message": "Deletion started in background"}
 
 if __name__ == "__main__":
     logger.info(f"Starting Pi Camera Server on http://{HOST}:{PORT}")
