@@ -99,14 +99,23 @@ class _ChatState extends State<Chat> {
   final List<int> chatColors = <int>[600, 400, 200];
 
   Future<void> loadChatHistory() async {
-    final response = await dio.get(
-      '$piUrl/history',
-      queryParameters: {'limit': 5},
-    );
+    try {
+      final response = await dio.get(
+        '$piUrl/history',
+        queryParameters: {'limit': 5},
+      );
 
-    setState(() {
-      _chatHistory = List<Map<String, dynamic>>.from(response.data);
-    });
+      if (mounted) {
+        // check widget is still alive
+        setState(() {
+          _chatHistory = (response.data as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+        });
+      }
+    } catch (e) {
+      print('Failed to load history: $e');
+    }
   }
 
   @override
