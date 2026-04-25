@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 
-final dio = Dio();
+final dio = Dio(BaseOptions(
+  connectTimeout: Duration(seconds: 5),
+  receiveTimeout: Duration(seconds: 5),
+  ));
 const piUrl = 'http://10.0.0.142:8000';
 
 Future<String?> downloadLatestMedia() async {
