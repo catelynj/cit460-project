@@ -156,34 +156,118 @@ class Media extends StatefulWidget {
 }
 
 class _MediaState extends State<Media> {
-  String? _latestFilePath;
+  // same implemntation as chat history
+  List<Map<String, dynamic>> _mediaItems = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // make microtask to avoid app hang
+    Future.microtask(() => loadAllMedia());
+  }
+
+  Future<void> loadAllMedia() async {
+    try {
+      final response = await dio.get('$piUrl/media');
+      if (mounted) {
+        setState(() {
+          _mediaItems = (response.data['items'] as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Could not load media — is the Pi reachable?';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> downloadAndAdd(Map<String, dynamic> item) async {
+    final path = await downloadLatestMedia();
+    if (path != null) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        children: [
-          SizedBox(height: 50),
-          Align(
-            alignment: Alignment.topRight,
-            child: ElevatedButton(
+    if (_isLoading) return Center(child: CircularProgressIndicator());
+    if (_error != null) return Center(child: Text(_error!));
+
+    return Column(
+      children: [
+        SizedBox(height: 50),
+        Align(
+          alignment: Alignment.topRight,
+          child: ElevatedButton(
+            onPressed: loadAllMedia,
+            child: const Icon(Icons.refresh),
+          ),
+        ),
+        Expanded(
+          child: _mediaItems.isEmpty
+              ? Center(child: Text('Nothing here yet!'))
+              : GridView.builder(
+                  padding: EdgeInsets.all(8),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 4,
+                    mainAxisSpacing: 4,
+                  ),
+                  itemCount: _mediaItems.length,
+                  itemBuilder: (context, index) {
+                    final item = _mediaItems[index];
+                    final isVideo = item['type'] == 'video';
+                    return GestureDetector(
+                      onTap: () => _showFullScreen(item),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.network(
+                            '$piUrl${item['url']}',
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                Container(color: Colors.grey[300]),
+                          ),
+                          if (isVideo)
+                            Center(
+                              child: Icon(Icons.play_circle,
+                                  color: Colors.white, size: 32),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  void _showFullScreen(Map<String, dynamic> item) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.network('$piUrl${item['url']}'),
+            Text(item['filename'],
+                style: TextStyle(fontSize: 12, color: Colors.grey)),
+            TextButton(
               onPressed: () async {
-                final path = await downloadLatestMedia();
-                if (path != null) {
-                  setState(() => _latestFilePath = path);
-                }
+                await downloadLatestMedia(); // swap for downloadByFilename() if you add it
+                Navigator.pop(context);
               },
-              child: const Icon(Icons.refresh),
+              child: Text('Download'),
             ),
-          ),
-          SizedBox(height: 350),
-          Align(
-            alignment: Alignment.center,
-            child: _latestFilePath != null
-                ? Image.file(File(_latestFilePath!))
-                : Text('Nothing here yet!'),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
