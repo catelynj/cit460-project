@@ -123,12 +123,12 @@ class _ChatState extends State<Chat> {
       itemBuilder: (BuildContext context, int index) {
         final item = _chatHistory[index];
         return ListTile(
-          title: Text(item['query']),
-          subtitle: Text(item['response'] ?? 'No response'),
-          trailing: Text(
+          title: Text(item['query'] + '?'),
+          subtitle: Text(
             item['queried_at'].substring(0, 16),
             style: TextStyle(fontSize: 11, color: Colors.grey),
           ),
+          trailing: Text(item['response'] ?? 'No response'),
         );
       },
     );
