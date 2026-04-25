@@ -137,10 +137,12 @@ class _ChatState extends State<Chat> {
         return ListTile(
           title: Text(item['query'] + '?'),
           subtitle: Text(
+            item['response'] ?? 'No response'
+          ),
+          trailing: Text(
             item['queried_at'].substring(0, 16),
             style: TextStyle(fontSize: 11, color: Colors.grey),
-          ),
-          trailing: Text(item['response'] ?? 'No response'),
+            ),
         );
       },
     );
