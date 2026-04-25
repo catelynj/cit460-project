@@ -3,35 +3,54 @@ import 'package:video_player/video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import 'package:permission_handler/permission_handler.dart';
 
-final dio = Dio(BaseOptions(
-  connectTimeout: Duration(seconds: 5),
-  receiveTimeout: Duration(seconds: 5),
-  ));
+final dio = Dio(
+  BaseOptions(
+    connectTimeout: Duration(seconds: 5),
+    receiveTimeout: Duration(seconds: 5),
+  ),
+);
 const piUrl = 'http://10.0.0.142:8000';
 
-Future<String?> downloadLatestMedia() async {
-  final metaResponse = await dio.get('$piUrl/media/latest');
-  final filename = metaResponse.data['filename'];
-  final fileType = metaResponse.data['type'];
+Future<String?> downloadMedia(Map<String, dynamic> item) async {
+  try {
+    final isVideo = item['type'] == 'video';
+    final filename = item['filename'];
+    final ext = isVideo ? 'mp4' : 'jpg';
+    final saveFilename =
+        '${isVideo ? 'video' : 'image'}_${DateTime.now().millisecondsSinceEpoch}.$ext';
 
-  final dir = await getApplicationDocumentsDirectory();
-  final savePath = '${dir.path}/$filename';
+    final dcimDir = Directory('/storage/emulated/0/DCIM/Testing');
+    if (!await dcimDir.exists()) {
+      await dcimDir.create(recursive: true);
+    }
 
-  await dio.download(
-    '$piUrl/download/$filename',
-    savePath,
-    onReceiveProgress: (received, total) {
-      if (total != -1) {
-        print(
-          'Download progress: ${(received / total * 100).toStringAsFixed(0)}%',
-        );
-      }
-    },
-  );
+    final savePath = path.join(dcimDir.path, saveFilename);
 
-  print('Saved $fileType to $savePath');
-  return savePath;
+    await dio.download(
+      '$piUrl/download/$filename',
+      savePath,
+      onReceiveProgress: (received, total) {
+        if (total != -1) {
+          print('${(received / total * 100).toStringAsFixed(0)}%');
+        }
+      },
+    );
+    await Process.run('am', [
+      'broadcast',
+      '-a',
+      'android.intent.action.MEDIA_SCANNER_SCAN_FILE',
+      '-d',
+      'file://$savePath',
+    ]);
+
+    return savePath;
+  } catch (e) {
+    print('Download failed: $e');
+    return null;
+  }
 }
 
 void main() {
@@ -136,13 +155,11 @@ class _ChatState extends State<Chat> {
         final item = _chatHistory[index];
         return ListTile(
           title: Text(item['query'] + '?'),
-          subtitle: Text(
-            item['response'] ?? 'No response'
-          ),
+          subtitle: Text(item['response'] ?? 'No response'),
           trailing: Text(
             item['queried_at'].substring(0, 16),
             style: TextStyle(fontSize: 11, color: Colors.grey),
-            ),
+          ),
         );
       },
     );
@@ -182,16 +199,11 @@ class _MediaState extends State<Media> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Could not load media — is the Pi reachable?';
+          _error = 'Could not load media.';
           _isLoading = false;
         });
       }
     }
-  }
-
-  Future<void> downloadAndAdd(Map<String, dynamic> item) async {
-    final path = await downloadLatestMedia();
-    if (path != null) setState(() {});
   }
 
   @override
@@ -236,8 +248,11 @@ class _MediaState extends State<Media> {
                           ),
                           if (isVideo)
                             Center(
-                              child: Icon(Icons.play_circle,
-                                  color: Colors.white, size: 32),
+                              child: Icon(
+                                Icons.play_circle,
+                                color: Colors.white,
+                                size: 32,
+                              ),
                             ),
                         ],
                       ),
@@ -257,11 +272,14 @@ class _MediaState extends State<Media> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.network('$piUrl${item['url']}'),
-            Text(item['filename'],
-                style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(
+              item['filename'],
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
             TextButton(
               onPressed: () async {
-                await downloadLatestMedia();
+                await Permission.storage.request();
+                final path = await downloadMedia(item);
                 Navigator.pop(context);
               },
               child: Text('Download'),
