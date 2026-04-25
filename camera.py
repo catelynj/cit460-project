@@ -10,7 +10,7 @@ https://pyimagesearch.com/2018/09/17/opencv-ocr-and-text-recognition-with-tesser
 from datetime import datetime
 from picamera2 import Picamera2, Preview
 from picamera2.encoders import H264Encoder, Quality
-from picamera2.outputs import PyavOutput
+from picamera2.outputs import PyavOutput, FfmpegOutput
 from imutils.object_detection import non_max_suppression
 import pytesseract
 import imutils
@@ -27,8 +27,8 @@ cam.configure(camera_config)
 encoder = H264Encoder()
 timestamp = datetime.now().strftime("%m%d%Y_%H%M%S")
 p_filename = f"/home/c8win/Captures/pic_{timestamp}.jpg"
-v_filename = f"/home/c8win/Captures/vid_{timestamp}.h264"
-output = v_filename
+v_filename = f"/home/c8win/Captures/vid_{timestamp}.mp4"
+output = FfmpegOutput(v_filename)
 
 def take_picture():
     cam.start()

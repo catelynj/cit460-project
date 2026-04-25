@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:video_player/video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -215,8 +215,8 @@ class _MediaState extends State<Media> {
               : GridView.builder(
                   padding: EdgeInsets.all(8),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 4,
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
                     mainAxisSpacing: 4,
                   ),
                   itemCount: _mediaItems.length,
@@ -261,7 +261,7 @@ class _MediaState extends State<Media> {
                 style: TextStyle(fontSize: 12, color: Colors.grey)),
             TextButton(
               onPressed: () async {
-                await downloadLatestMedia(); // swap for downloadByFilename() if you add it
+                await downloadLatestMedia();
                 Navigator.pop(context);
               },
               child: Text('Download'),
