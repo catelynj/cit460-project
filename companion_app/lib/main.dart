@@ -95,18 +95,40 @@ class Chat extends StatefulWidget {
 }
 
 class _ChatState extends State<Chat> {
-  final List<String> chats = <String>['Chat 1', 'Chat 2', 'Chat 3'];
+  List<Map<String, dynamic>> _chatHistory = [];
   final List<int> chatColors = <int>[600, 400, 200];
+
+  Future<void> loadChatHistory() async {
+    final response = await dio.get(
+      '$piUrl/history',
+      queryParameters: {'limit': 5},
+    );
+
+    setState(() {
+      _chatHistory = List<Map<String, dynamic>>.from(response.data);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadChatHistory();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 50),
-      itemCount: chats.length,
+      itemCount: _chatHistory.length,
       itemBuilder: (BuildContext context, int index) {
-        return Container(
-          height: 150,
-          color: Colors.deepPurple[chatColors[index]],
-          child: Center(child: Text(chats[index])),
+        final item = _chatHistory[index];
+        return ListTile(
+          title: Text(item['query']),
+          subtitle: Text(item['response'] ?? 'No response'),
+          trailing: Text(
+            item['queried_at'].substring(0, 16),
+            style: TextStyle(fontSize: 11, color: Colors.grey),
+          ),
         );
       },
     );
