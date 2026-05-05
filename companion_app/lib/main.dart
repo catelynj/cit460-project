@@ -7,8 +7,8 @@ import 'package:permission_handler/permission_handler.dart';
 
 final dio = Dio(
   BaseOptions(
-    connectTimeout: Duration(seconds: 5),
-    receiveTimeout: Duration(seconds: 5),
+    connectTimeout: Duration(seconds: 120),
+    receiveTimeout: Duration(seconds: 120),
   ),
 );
 const piUrl = 'http://10.0.0.142:8000';
