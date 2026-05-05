@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:video_player/video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:permission_handler/permission_handler.dart';
 
@@ -83,6 +82,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   var selectedIndex = 0;
+  final List<String> _titles = ['Chat History', 'Media Gallery'];
 
   void _onDestinationSelected(int index) {
     setState(() {
@@ -105,6 +105,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Scaffold(
+      appBar: AppBar(title: Text(_titles[selectedIndex])),
       body: Row(
         children: [
           NavRail(
@@ -126,7 +127,6 @@ class Chat extends StatefulWidget {
 
 class _ChatState extends State<Chat> {
   List<Map<String, dynamic>> _chatHistory = [];
-  final List<int> chatColors = <int>[800, 700, 600, 400, 200];
 
   Future<void> loadChatHistory() async {
     try {
@@ -159,9 +159,11 @@ class _ChatState extends State<Chat> {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: loadChatHistory,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 70),
+      backgroundColor: Color(0xFF1C2921),
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 30),
         itemCount: _chatHistory.length,
+        separatorBuilder: (context, index) => Divider(),
         itemBuilder: (BuildContext context, int index) {
           final item = _chatHistory[index];
           return ListTile(
@@ -226,12 +228,16 @@ class _MediaState extends State<Media> {
 
     return Column(
       children: [
-        SizedBox(height: 50),
+        SizedBox(height: 10),
         Align(
-          alignment: Alignment.topRight,
+          alignment: Alignment.bottomCenter,
           child: ElevatedButton(
             onPressed: loadAllMedia,
             child: const Icon(Icons.refresh),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF1C2921),
+              foregroundColor: Colors.greenAccent,
+            ),
           ),
         ),
         Expanded(
@@ -256,7 +262,7 @@ class _MediaState extends State<Media> {
                           Image.network(
                             '$piUrl${item['url']}',
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
+                            errorBuilder: (_, _, _) =>
                                 Container(color: Colors.grey[300]),
                           ),
                           if (isVideo)
@@ -277,17 +283,15 @@ class _MediaState extends State<Media> {
     );
   }
 
+  // References:
+  // video_player | Flutter Package. (n.d.). Dart Packages. https://pub.dev/packages/video_player
 
-// References:
-// video_player | Flutter Package. (n.d.). Dart Packages. https://pub.dev/packages/video_player
-  
   void _showFullScreen(Map<String, dynamic> item) {
     final isVideo = item['type'] == 'video';
     showDialog(
       context: context,
-      builder: (_) => isVideo
-          ? _VideoFullScreen(item: item)
-          : _ImageFullScreen(item: item),
+      builder: (_) =>
+          isVideo ? _VideoFullScreen(item: item) : _ImageFullScreen(item: item),
     );
   }
 }
@@ -316,7 +320,7 @@ class _VideoFullScreenState extends State<_VideoFullScreen> {
       final controller = VideoPlayerController.networkUrl(
         Uri.parse('$piUrl${widget.item['url']}'),
       );
-      await controller.initialize(); 
+      await controller.initialize();
       if (mounted) {
         setState(() {
           _controller = controller;
@@ -334,10 +338,9 @@ class _VideoFullScreenState extends State<_VideoFullScreen> {
 
   @override
   void dispose() {
-    _controller?.dispose();          
+    _controller?.dispose();
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -346,10 +349,7 @@ class _VideoFullScreenState extends State<_VideoFullScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (_videoError != null)
-            SizedBox(
-              height: 200,
-              child: Center(child: Text(_videoError!)),
-            )
+            SizedBox(height: 200, child: Center(child: Text(_videoError!)))
           else if (_isInitialized)
             AspectRatio(
               aspectRatio: _controller!.value.aspectRatio,
@@ -366,12 +366,12 @@ class _VideoFullScreenState extends State<_VideoFullScreen> {
                   ? Icons.pause
                   : Icons.play_arrow,
             ),
-            onPressed: _isInitialized    
+            onPressed: _isInitialized
                 ? () => setState(() {
-                      _controller!.value.isPlaying
-                          ? _controller!.pause()
-                          : _controller!.play();
-                    })
+                    _controller!.value.isPlaying
+                        ? _controller!.pause()
+                        : _controller!.play();
+                  })
                 : null,
           ),
           Text(
@@ -391,6 +391,7 @@ class _VideoFullScreenState extends State<_VideoFullScreen> {
     );
   }
 }
+
 // same general structure as video, just simpler
 class _ImageFullScreen extends StatelessWidget {
   final Map<String, dynamic> item;
