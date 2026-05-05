@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 import os
 import requests
 import translators as ts
-import wolframalpha
 
 load_dotenv()
 app_id = os.getenv("APP_ID")
@@ -24,8 +23,12 @@ def translate(text):
 
 def wolfram(prompt):
     params = {"appid": app_id, "i": prompt}
-    response = requests.get("http://api.wolframalpha.com/v1/result", params=params)
-    response.raise_for_status()
-    return response.text
+    try:
+      response = requests.get("http://api.wolframalpha.com/v1/result", params=params)
+      response.raise_for_status()
+      return response.text
+    except requests.exceptions.HTTPError as e:
+      return "Could not answer, try rephrasing."
+    
 
 
