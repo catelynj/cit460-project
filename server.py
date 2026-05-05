@@ -24,7 +24,7 @@ import uvicorn
 
 CAPTURES_DIR = Path("/home/c8win/Captures")       
 IMAGE_EXTENSION = {".jpg"}
-VIDEO_EXTENSION = {".h264"}
+VIDEO_EXTENSION = {".mp4"}
 HOST = "0.0.0.0"                              
 PORT = 8000
 
@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 CAPTURES_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(
-    title="Pi Camera Server",
-    description="Transfer images and videos from Raspberry Pi to Flutter app",
+    title="Raspberry Pi Media Server",
+    description="Transfer images, video, and API responses from Raspberry Pi to Flutter app",
     version="1.0.0",
 )
 
