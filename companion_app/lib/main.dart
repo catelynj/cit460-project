@@ -66,15 +66,11 @@ class MainApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.greenAccent,
-          brightness: Brightness.dark,),
-        textTheme: TextTheme(
-          displayLarge: const TextStyle(
-            fontSize: 50,
-            fontWeight: FontWeight.bold,
-          ),
-        )
+          brightness: Brightness.dark,
+        ),
       ),
-      home: HomePage());
+      home: HomePage(),
+    );
   }
 }
 
@@ -130,13 +126,13 @@ class Chat extends StatefulWidget {
 
 class _ChatState extends State<Chat> {
   List<Map<String, dynamic>> _chatHistory = [];
-  final List<int> chatColors = <int>[600, 400, 200];
+  final List<int> chatColors = <int>[800, 700, 600, 400, 200];
 
   Future<void> loadChatHistory() async {
     try {
       final response = await dio.get(
         '$piUrl/history',
-        queryParameters: {'limit': 5},
+        queryParameters: {'limit': 20},
       );
 
       if (mounted) {
@@ -158,22 +154,28 @@ class _ChatState extends State<Chat> {
     Future.microtask(() => loadChatHistory());
   }
 
+  // UPDATE: Modified structure to add RefreshIndicator from: https://stackoverflow.com/questions/57972505/pull-down-to-refresh-in-flutter
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 50),
-      itemCount: _chatHistory.length,
-      itemBuilder: (BuildContext context, int index) {
-        final item = _chatHistory[index];
-        return ListTile(
-          title: Text(item['query'] + '?'),
-          subtitle: Text(item['response'] ?? 'No response'),
-          trailing: Text(
-            item['queried_at'].substring(0, 16),
-            style: TextStyle(fontSize: 11, color: Colors.grey),
-          ),
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: loadChatHistory,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 70),
+        itemCount: _chatHistory.length,
+        itemBuilder: (BuildContext context, int index) {
+          final item = _chatHistory[index];
+          return ListTile(
+            title: Text(item['query'] + '?'),
+            subtitle: Text(item['response'] ?? 'No response'),
+            minTileHeight: 80,
+            isThreeLine: true,
+            trailing: Text(
+              item['queried_at'].substring(0, 10),
+              style: TextStyle(fontSize: 10, color: Colors.blueGrey),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -189,7 +191,6 @@ class _MediaState extends State<Media> {
   List<Map<String, dynamic>> _mediaItems = [];
   bool _isLoading = true;
   String? _error;
-
   @override
   void initState() {
     super.initState();
@@ -276,28 +277,124 @@ class _MediaState extends State<Media> {
     );
   }
 
+
+// References:
+// video_player | Flutter Package. (n.d.). Dart Packages. https://pub.dev/packages/video_player
+  
   void _showFullScreen(Map<String, dynamic> item) {
+    final isVideo = item['type'] == 'video';
     showDialog(
       context: context,
-      builder: (_) => Dialog(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.network('$piUrl${item['url']}'),
-            Text(
-              item['filename'],
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+      builder: (_) => isVideo
+          ? _VideoFullScreen(item: item)
+          : _ImageFullScreen(item: item),
+    );
+  }
+}
+
+class _VideoFullScreen extends StatefulWidget {
+  final Map<String, dynamic> item;
+  const _VideoFullScreen({required this.item});
+
+  @override
+  State<_VideoFullScreen> createState() => _VideoFullScreenState();
+}
+
+class _VideoFullScreenState extends State<_VideoFullScreen> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+
+  // this section is very similar to API reference doc, just tailored to my code structure
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(
+      Uri.parse('$piUrl${widget.item['url']}'),
+    )..initialize().then((_) {
+        if (mounted) setState(() => _isInitialized = true);
+        _controller.play();
+      });
+  }
+
+  // need to dispose controller to avoid memory leaks
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // main structure is based on API reference
+          _isInitialized
+            // if its loaded, show controller
+              ? AspectRatio(
+                  aspectRatio: _controller.value.aspectRatio,
+                  child: VideoPlayer(_controller),
+                )
+                // if its not, show loading symbol
+              : const SizedBox(
+                  height: 200,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+          // play/pause button controls (API uses floating action button rather than icon)
+          IconButton(
+            icon: Icon(
+              _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
             ),
-            TextButton(
-              onPressed: () async {
-                await Permission.storage.request();
-                final path = await downloadMedia(item);
-                Navigator.pop(context);
-              },
-              child: Text('Download'),
-            ),
-          ],
-        ),
+            onPressed: () => setState(() {
+              _controller.value.isPlaying
+                  ? _controller.pause()
+                  : _controller.play();
+            }),
+          ),
+          Text(
+            widget.item['filename'],
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          TextButton(
+            onPressed: () async {
+              await Permission.storage.request();
+              await downloadMedia(widget.item);
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Download'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// same general structure as video, just simpler
+class _ImageFullScreen extends StatelessWidget {
+  final Map<String, dynamic> item;
+  const _ImageFullScreen({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.network('$piUrl${item['url']}'),
+          Text(
+            item['filename'],
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          TextButton(
+            onPressed: () async {
+              await Permission.storage.request();
+              await downloadMedia(item);
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Download'),
+          ),
+        ],
       ),
     );
   }
