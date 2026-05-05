@@ -11,7 +11,7 @@ final dio = Dio(
     receiveTimeout: Duration(seconds: 5),
   ),
 );
-const piUrl = 'http://10.0.0.142:8000';
+const piUrl = 'http://0.0.0.0:8000';
 
 Future<String?> downloadMedia(Map<String, dynamic> item) async {
   try {
