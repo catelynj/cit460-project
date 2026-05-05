@@ -26,6 +26,7 @@ init_db()
 print("awaiting input...")
 try:
     while True:
+        tts(".") # try to wake TTS up on start
         current_state = read_touch()
 
         if current_state == 1 and last_state == 0:
@@ -54,15 +55,21 @@ try:
                         break
                     elif 'ask' in val  or 'question' in val:
                         tts("state your question")
-                        time.sleep(2.0)
+                        time.sleep(1.0) # reduce sleep time, timing is too awkward
                         print("listening...")
                         question = listen(dur=10)
                         print(f"heard: {question}")
                         print("calling wolfram")
                         answer = wolfram(question)
-                        log_query(question, answer)
-                        print(answer)
-                        tts(answer)
+                        # if failed query, don't log it
+                        if answer.__contains__ ('Could not answer'):
+                            print(answer)
+                            tts(answer)
+                        else:
+                            log_query(question, answer)
+                            print(answer)
+                            tts(answer)
+                    # uncomment for real-time OCR text translation (takes way too long)
                     elif 'translate' in val:
                         print("'translate' heard")
                         #snapshot() # hardcoded for testing

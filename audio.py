@@ -19,14 +19,9 @@ def tts(phrase):
   engine = pyttsx3.init()
   engine.setProperty('rate', 140)
   engine.setProperty('volume', 1.0)
-  engine.say(".")
-  engine.runAndWait()
   engine.say(phrase)
   engine.runAndWait()
   engine.stop()
-
-#tts("hello goodbye how are you")
-
 
 def listen(dur=4):
   try:
@@ -38,7 +33,6 @@ def listen(dur=4):
   time.sleep(0.5)
   subprocess.run(['ffmpeg', '-y', '-i', 'prompt_raw.wav', 'prompt.wav'],capture_output=True)
   
-  
   r = sr.Recognizer()
   try:
     prompt = sr.AudioFile('prompt.wav')
@@ -47,7 +41,6 @@ def listen(dur=4):
       audio = r.record(source)
     print(f"[{time.time():.2f}] sending to google")
     result = r.recognize_google(audio)
-    print(f"[{time.time():.2f}] got result: {result}")
     return result
   except sr.UnknownValueError:
     print(f"[{time.time():.2f}] not recognized")
