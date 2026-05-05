@@ -25,7 +25,7 @@ import uvicorn
 CAPTURES_DIR = Path("/home/c8win/Captures")       
 IMAGE_EXTENSION = {".jpg"}
 VIDEO_EXTENSION = {".mp4"}
-HOST = "10.0.0.142"                              
+HOST = "0.0.0.0"                              
 PORT = 8000
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
