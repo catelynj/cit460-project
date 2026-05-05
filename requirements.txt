@@ -1,0 +1,22 @@
+# api.py
+python-dotenv==1.0.1
+requests==2.32.5
+translators==6.0.4
+
+# audio.py
+pyttsx3==2.99
+SpeechRecognition==3.15.2
+
+# camera.py
+picamera2==0.3.34
+pytesseract==0.3.13
+imutils==0.5.4
+opencv-contrib-python==4.13.0.92
+numpy==2.3.5
+
+# server.py
+fastapi==0.136.1
+uvicorn==0.46.0
+
+# touch.py
+rpi-lgpio==0.6
