@@ -303,20 +303,31 @@ class _VideoFullScreen extends StatefulWidget {
 class _VideoFullScreenState extends State<_VideoFullScreen> {
   late VideoPlayerController _controller;
   bool _isInitialized = false;
+  String? _videoError;
 
-  // this section is very similar to API reference doc, just tailored to my code structure
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(
-      Uri.parse('$piUrl${widget.item['url']}'),
-    )..initialize().then((_) {
-        if (mounted) setState(() => _isInitialized = true);
-        _controller.play();
-      });
+    _initVideo(); 
   }
 
-  // need to dispose controller to avoid memory leaks
+  Future<void> _initVideo() async {
+    try {
+      _controller = VideoPlayerController.networkUrl(
+        Uri.parse('$piUrl${widget.item['url']}'),
+      );
+      await _controller.initialize(); 
+      if (mounted) {
+        setState(() => _isInitialized = true);
+        _controller.play();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _videoError = 'Failed to load video.');
+      }
+    }
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -329,28 +340,34 @@ class _VideoFullScreenState extends State<_VideoFullScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // main structure is based on API reference
-          _isInitialized
-            // if its loaded, show controller
-              ? AspectRatio(
-                  aspectRatio: _controller.value.aspectRatio,
-                  child: VideoPlayer(_controller),
-                )
-                // if its not, show loading symbol
-              : const SizedBox(
-                  height: 200,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-          // play/pause button controls (API uses floating action button rather than icon)
+          if (_videoError != null)
+            SizedBox(
+              height: 200,
+              child: Center(child: Text(_videoError!)),
+            )
+          else if (_isInitialized)
+            AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: VideoPlayer(_controller),
+            )
+          else
+            const SizedBox(
+              height: 200,
+              child: Center(child: CircularProgressIndicator()),
+            ),
           IconButton(
             icon: Icon(
-              _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+              _isInitialized && _controller.value.isPlaying
+                  ? Icons.pause
+                  : Icons.play_arrow,
             ),
-            onPressed: () => setState(() {
-              _controller.value.isPlaying
-                  ? _controller.pause()
-                  : _controller.play();
-            }),
+            onPressed: _isInitialized    
+                ? () => setState(() {
+                      _controller.value.isPlaying
+                          ? _controller.pause()
+                          : _controller.play();
+                    })
+                : null,
           ),
           Text(
             widget.item['filename'],
