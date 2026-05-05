@@ -301,38 +301,43 @@ class _VideoFullScreen extends StatefulWidget {
 }
 
 class _VideoFullScreenState extends State<_VideoFullScreen> {
-  late VideoPlayerController _controller;
+  VideoPlayerController? _controller;
   bool _isInitialized = false;
   String? _videoError;
 
   @override
   void initState() {
     super.initState();
-    _initVideo(); 
+    _initVideo();
   }
 
   Future<void> _initVideo() async {
     try {
-      _controller = VideoPlayerController.networkUrl(
+      final controller = VideoPlayerController.networkUrl(
         Uri.parse('$piUrl${widget.item['url']}'),
       );
-      await _controller.initialize(); 
+      await controller.initialize(); 
       if (mounted) {
-        setState(() => _isInitialized = true);
-        _controller.play();
+        setState(() {
+          _controller = controller;
+          _isInitialized = true;
+        });
+        controller.play();
+      } else {
+        controller.dispose();
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _videoError = 'Failed to load video.');
-      }
+      print('Video init error: $e');
+      if (mounted) setState(() => _videoError = 'Failed to load video: $e');
     }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();          
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -347,8 +352,8 @@ class _VideoFullScreenState extends State<_VideoFullScreen> {
             )
           else if (_isInitialized)
             AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: VideoPlayer(_controller),
+              aspectRatio: _controller!.value.aspectRatio,
+              child: VideoPlayer(_controller!),
             )
           else
             const SizedBox(
@@ -357,15 +362,15 @@ class _VideoFullScreenState extends State<_VideoFullScreen> {
             ),
           IconButton(
             icon: Icon(
-              _isInitialized && _controller.value.isPlaying
+              _isInitialized && _controller!.value.isPlaying
                   ? Icons.pause
                   : Icons.play_arrow,
             ),
             onPressed: _isInitialized    
                 ? () => setState(() {
-                      _controller.value.isPlaying
-                          ? _controller.pause()
-                          : _controller.play();
+                      _controller!.value.isPlaying
+                          ? _controller!.pause()
+                          : _controller!.play();
                     })
                 : null,
           ),
@@ -386,7 +391,6 @@ class _VideoFullScreenState extends State<_VideoFullScreen> {
     );
   }
 }
-
 // same general structure as video, just simpler
 class _ImageFullScreen extends StatelessWidget {
   final Map<String, dynamic> item;

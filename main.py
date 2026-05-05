@@ -26,7 +26,7 @@ init_db()
 print("awaiting input...")
 try:
     while True:
-        tts(".") # try to wake TTS up on start
+        #tts(".") # try to wake TTS up on start
         current_state = read_touch()
 
         if current_state == 1 and last_state == 0:
