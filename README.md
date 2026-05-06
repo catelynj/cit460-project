@@ -65,8 +65,22 @@ Deploying a wearable device with a camera and a microphone naturally raises a nu
 On the practical side, real-time performance remains an ongoing challenge, as latency from API calls, OCR processing, and TTS output can vary depending on network conditions and hardware limitations. Additionally, as time progresses, the current hardware stack will become increasingly outdated and have more performance issues. This can be combatted with improved hardware and corrective maintenance (software/package updates, optimizations, etc.).
 
 ### Outcome
+_Flutter Companion App_
+| API Chat History | Media Gallery |
+| ------------- | ------------- |
+| <img width="219" height="488" alt="Flutter App Chat History" src="https://github.com/user-attachments/assets/efe8d023-568b-4d1a-b7e5-768a110da397" />  | <img width="219" height="488" alt="Flutter App Media Gallery" src="https://github.com/user-attachments/assets/1c223b5d-9376-414d-a70a-62a68831bfbf" /> |
 
-[will insert screenshots and stuff]
+_Text Translation with EAST & Tesseract_
+| Text Translation | Image Used |
+| ------------- | ------------- |
+|<img width="511" height="200" alt="Screenshot 2026-05-05 220222" src="https://github.com/user-attachments/assets/e76e936f-cead-4088-9947-523df62a58c5" /> |<img width="695" height="147" alt="card" src="https://github.com/user-attachments/assets/29a2d366-2903-4a57-b241-5197db18f18d" />|
+
+
+ 
+ 
+
+
+
 
 ### References:
 _Debugging and headaches dealt with using Claude_ 
